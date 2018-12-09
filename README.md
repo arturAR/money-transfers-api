@@ -17,3 +17,10 @@ a pre-installed container/server).
 Implicit requirements:
 1. The code produced by you is expected to be of high quality.
 2. There are no detailed requirements, use common sense.
+
+## How to Build
+    mvn clean package
+
+## How to Run
+    java -jar ./target/revolut-money-transfers-1.0.jar
+
