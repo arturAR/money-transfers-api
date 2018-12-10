@@ -1,81 +1,77 @@
 package server;
 
-import db.InMemoryRepository;
-import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import spark.Spark;
+import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class AccountsApiTest {
-    private final InMemoryRepository repository = new InMemoryRepository();
-    private final RestApiServer restServer = new RestApiServer(repository);
-    private final HttpClient httpClient = new HttpClient();
+
+    private static final TestEnv TEST_ENV = new TestEnv();
 
     @BeforeAll
-    void setUpAll() throws Exception {
-        httpClient.start();
+    static void setUpAll() throws Exception {
+        TEST_ENV.setUpAll();
+    }
 
-        restServer.start();
-        Spark.awaitInitialization();
+    @BeforeEach
+    void setUp() throws Exception {
+        TEST_ENV.setUp();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        TEST_ENV.tearDown();
     }
 
     @AfterAll
-    void tearDownAll() throws Exception {
-        httpClient.stop();
-
-        Spark.stop();
-        //Wait, until Spark server is fully stopped
-        Thread.sleep(2000);
+    static void tearDownAll() throws Exception {
+        TEST_ENV.tearDownAll();
     }
 
     @Test
     void testGetAccounts_ReturnAllAccounts() throws Exception {
-        ContentResponse res = httpClient.GET("http://localhost:4567/accounts");
+        ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/accounts");
 
         assertEquals(
-                "[{\"id\":1,\"number\":\"1111\",\"balance\":500}," +
-                        "{\"id\":2,\"number\":\"1112\",\"balance\":1000}]",
+                "[{\"id\":1,\"number\":\"1111\",\"balance\":500.00},{\"id\":2,\"number\":\"1112\",\"balance\":1000.00}]",
                 res.getContentAsString());
     }
 
     @Test
     void testGetAccountById_ReturnAccountWithSameId() throws Exception {
-        ContentResponse res = httpClient.GET("http://localhost:4567/accounts/1");
+        ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/accounts/1");
 
-        assertEquals("{\"id\":1,\"number\":\"1111\",\"balance\":500}", res.getContentAsString());
+        assertEquals("{\"id\":1,\"number\":\"1111\",\"balance\":500.00}", res.getContentAsString());
     }
 
     @Test
     void testGetAccountById_WhenMissedId_ReturnInternalServerError() throws Exception {
-        ContentResponse res = httpClient.GET("http://localhost:4567/accounts/333");
+        ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/accounts/333");
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR_500, res.getStatus());
     }
 
     @Test
     void testGetAllTransfersForAccountById_ReturnAccountTransfers() throws Exception {
-        ContentResponse res = httpClient.GET("http://localhost:4567/accounts/2/transfers");
+        ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/accounts/2/transfers");
 
         assertEquals(
-                "[{\"id\":3,\"amount\":500,\"fromAcc\":{\"id\":2,\"number\":\"1112\",\"balance\":1000},\"toAcc\":{\"id\":1,\"number\":\"1111\",\"balance\":500}}]",
+                "[{\"id\":3,\"amount\":500.00,\"fromAcc\":{\"id\":2,\"number\":\"1112\"},\"toAcc\":{\"id\":1,\"number\":\"1111\"},\"timestamp\":\"Dec 11, 2018 1:00:00 PM\"}," +
+                        "{\"id\":1,\"amount\":200.00,\"fromAcc\":{\"id\":1,\"number\":\"1111\"},\"toAcc\":{\"id\":2,\"number\":\"1112\"},\"timestamp\":\"Dec 10, 2018 11:00:00 AM\"}," +
+                        "{\"id\":2,\"amount\":200.00,\"fromAcc\":{\"id\":1,\"number\":\"1111\"},\"toAcc\":{\"id\":2,\"number\":\"1112\"},\"timestamp\":\"Dec 9, 2018 12:00:00 PM\"}]",
                 res.getContentAsString());
     }
 
     @Test
     void testCreateNewAccount_ReturnCreatedAccount() throws Exception {
-        Request req = httpClient.POST("http://localhost:4567/accounts");
+        Request req = TEST_ENV.httpClient().POST("http://localhost:4567/accounts");
         req.content(new StringContentProvider("{\"number\":\"1113\", \"balance\":700}"));
         ContentResponse res = req.send();
 
-        assertEquals("{\"id\":3,\"number\":\"1113\",\"balance\":700}", res.getContentAsString());
+        assertEquals("{\"id\":3,\"number\":\"1113\",\"balance\":700.00}", res.getContentAsString());
     }
 }

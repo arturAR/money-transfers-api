@@ -1,6 +1,6 @@
 package server;
 
-import db.InMemoryRepository;
+import db.MemoryDatabase;
 import server.routes.AccountsRoutes;
 import server.routes.TransfersRoutes;
 import server.service.AccountsService;
@@ -15,9 +15,9 @@ public class RestApiServer {
     private final AccountsRoutes accountsRoutes;
     private final TransfersRoutes transfersRoutes;
 
-    public RestApiServer(InMemoryRepository repository) {
-        accountsRoutes = new AccountsRoutes(new AccountsService(repository));
-        transfersRoutes = new TransfersRoutes(new TransfersService(repository));
+    public RestApiServer(MemoryDatabase db) {
+        accountsRoutes = new AccountsRoutes(new AccountsService(db));
+        transfersRoutes = new TransfersRoutes(new TransfersService(db));
     }
 
     public void start() {
