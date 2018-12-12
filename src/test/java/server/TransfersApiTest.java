@@ -1,6 +1,7 @@
 package server;
 
 import com.google.gson.Gson;
+import model.dto.ErrorMessage;
 import model.entity.Transfer;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
@@ -66,10 +67,25 @@ class TransfersApiTest {
     }
 
     @Test
+    void testGetTransferById_WhenNonNumberId_ReturnErrorMessage() throws Exception {
+        ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/transfers/xyz");
+
+        Gson gson = new Gson();
+        ErrorMessage e = gson.fromJson(res.getContentAsString(), ErrorMessage.class);
+
+        assertEquals(HttpStatus.UNPROCESSABLE_ENTITY_422, res.getStatus());
+        assertEquals("Validation error", e.msg);
+    }
+
+    @Test
     void testGetTransferById_WhenMissedId_ReturnInternalServerError() throws Exception {
         ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/transfers/333");
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR_500, res.getStatus());
+        Gson gson = new Gson();
+        ErrorMessage e = gson.fromJson(res.getContentAsString(), ErrorMessage.class);
+
+        assertEquals(HttpStatus.NOT_FOUND_404, res.getStatus());
+        assertEquals("Requested entity not found", e.msg);
     }
 
     @Test
@@ -79,5 +95,18 @@ class TransfersApiTest {
         ContentResponse res = req.send();
 
         assertEquals(HttpStatus.CREATED_201, res.getStatus());
+    }
+
+    @Test
+    void testRequestTransfer_WhenTransferFromUnknownAcc_ReturnErrorMessage() throws Exception {
+        Request req = TEST_ENV.httpClient().POST("http://localhost:4567/transfers");
+        req.content(new StringContentProvider("{\"fromAcc\":100,\"toAcc\":2,\"amount\":100}"));
+        ContentResponse res = req.send();
+
+        Gson gson = new Gson();
+        ErrorMessage e = gson.fromJson(res.getContentAsString(), ErrorMessage.class);
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR_500, req.send().getStatus());
+        assertEquals("Data access error", e.msg);
     }
 }

@@ -17,11 +17,11 @@ public class TestEnv {
         Spark.awaitInitialization();
     }
 
-    public void setUp() throws Exception {
+    public void setUp() {
         db.wrap(new MemoryDatabase());
     }
 
-    public void tearDown() throws Exception {
+    public void tearDown() {
         db.shutdown();
     }
 
@@ -40,17 +40,17 @@ public class TestEnv {
     public static class TestMemoryDatabaseWrapper extends MemoryDatabase {
         private MemoryDatabase wrappedInstance;
 
-        public TestMemoryDatabaseWrapper() {}
+        TestMemoryDatabaseWrapper() {}
 
         public TestMemoryDatabaseWrapper(MemoryDatabase memoryDatabase) {
             wrappedInstance = memoryDatabase;
         }
 
-        public void wrap(MemoryDatabase memoryDatabase) {
+        void wrap(MemoryDatabase memoryDatabase) {
             this.wrappedInstance = memoryDatabase;
         }
 
-        public void shutdown() {
+        void shutdown() {
             wrappedInstance.ctx().execute("SHUTDOWN IMMEDIATELY");
         }
 

@@ -1,17 +1,21 @@
 package server;
 
 import db.MemoryDatabase;
+import server.handlers.ContentHandler;
+import server.handlers.ErrorHandler;
 import server.routes.AccountsRoutes;
 import server.routes.TransfersRoutes;
 import server.service.AccountsService;
 import server.service.TransfersService;
 import server.transformer.JsonTransformer;
 
-import static spark.Spark.get;
-import static spark.Spark.post;
+import static spark.Spark.*;
 
 public class RestApiServer {
     private final JsonTransformer transformer = new JsonTransformer();
+    private final ContentHandler contentHandler = new ContentHandler();
+    private final ErrorHandler errorHandler = new ErrorHandler();
+
     private final AccountsRoutes accountsRoutes;
     private final TransfersRoutes transfersRoutes;
 
@@ -23,6 +27,9 @@ public class RestApiServer {
     public void start() {
         buildAccountsApi();
         buildTransfersApi();
+
+        registerResponseContentHandler();
+        registerErrorHandler();
     }
 
     private void buildAccountsApi() {
@@ -41,5 +48,13 @@ public class RestApiServer {
         get("/transfers/:id", transfersRoutes.getTransferById(), transformer);
 
         post("/transfers", transfersRoutes.performTransfer(), transformer);
+    }
+
+    private void registerResponseContentHandler() {
+        after(contentHandler.getContentHandler());
+    }
+
+    private void registerErrorHandler() {
+        exception(Exception.class, errorHandler.getErrorHandler());
     }
 }

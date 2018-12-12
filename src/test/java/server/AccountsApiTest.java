@@ -1,5 +1,7 @@
 package server;
 
+import com.google.gson.Gson;
+import model.dto.ErrorMessage;
 import org.eclipse.jetty.client.api.ContentResponse;
 import org.eclipse.jetty.client.api.Request;
 import org.eclipse.jetty.client.util.StringContentProvider;
@@ -52,7 +54,11 @@ class AccountsApiTest {
     void testGetAccountById_WhenMissedId_ReturnInternalServerError() throws Exception {
         ContentResponse res = TEST_ENV.httpClient().GET("http://localhost:4567/accounts/333");
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR_500, res.getStatus());
+        Gson gson = new Gson();
+        ErrorMessage e = gson.fromJson(res.getContentAsString(), ErrorMessage.class);
+
+        assertEquals(HttpStatus.NOT_FOUND_404, res.getStatus());
+        assertEquals("Requested entity not found", e.msg);
     }
 
     @Test
