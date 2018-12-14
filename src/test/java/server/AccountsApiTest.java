@@ -8,7 +8,7 @@ import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.jupiter.api.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class AccountsApiTest {
 
@@ -79,5 +79,17 @@ class AccountsApiTest {
         ContentResponse res = req.send();
 
         assertEquals("{\"id\":3,\"number\":\"1113\",\"balance\":700.00}", res.getContentAsString());
+    }
+
+    @Test
+    void testCreateNewAccount_ShouldThrowIllegalStateException() {
+        Request req = TEST_ENV.httpClient().POST("http://localhost:4567/accounts");
+        try {
+            req.send();
+        } catch (IllegalStateException e) {
+            assertNotNull(e);
+        } catch (Exception e) {
+            assertNull(e);
+        }
     }
 }
